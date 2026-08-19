@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")   // Kotlin 2.0 Compose 编译器插件
+    // 注意：即使不使用 kotlin.plugin.compose，只要用 composeOptions 也能编译
+    id("org.jetbrains.kotlin.plugin.compose")  // 保留，无妨
 }
 
 android {
@@ -16,7 +17,6 @@ android {
         versionName = "1.0.0"
     }
 
-    // ========== 签名配置（自动降级） ==========
     signingConfigs {
         create("release") {
             val keyStorePath = System.getenv("KEYSTORE_PATH")
@@ -26,12 +26,11 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                // 本地回退到 debug 签名
                 storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
-                println("⚠️  Using debug keystore for release signing config (local only)")
+                println("⚠️  Using debug keystore")
             }
         }
     }
@@ -56,14 +55,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // ========== 新写法：使用 compilerOptions 替代弃用的 kotlinOptions ==========
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    // ========== 使用旧的 kotlinOptions（如果不想用 compilerOptions） ==========
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     buildFeatures {
+        compose = true          // 显式启用 Compose
         buildConfig = true
-        // compose = true 已移除，因为 kotlin.plugin.compose 已接管
+    }
+
+    // ========== 使用 composeOptions 设置编译器扩展版本 ==========
+    composeOptions {
+        // 与 Kotlin 2.0.21 对应的最新稳定版（自动匹配，也可留空）
+        // kotlinCompilerExtensionVersion = "2.0.21" // 通常自动，但明确指定也可
     }
 
     packaging {
@@ -75,12 +80,7 @@ android {
     }
 }
 
-// ========== 🔥 关键：Kotlin 2.0 必须显式声明 Compose 编译器选项 ==========
-compose {
-    compilerOptions {
-        // 默认配置，如需自定义稳定性文件可在此添加
-    }
-}
+// 移除顶层 compose {} 块，以免引发解析错误
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
