@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")   // Kotlin 2.0 编译器插件
+    id("org.jetbrains.kotlin.plugin.compose")   // Kotlin 2.0 Compose 编译器插件
 }
 
 android {
@@ -16,18 +16,17 @@ android {
         versionName = "1.0.0"
     }
 
-    // ========== 签名配置（自动降级，本地无环境变量也不报错） ==========
+    // ========== 签名配置（自动降级） ==========
     signingConfigs {
         create("release") {
             val keyStorePath = System.getenv("KEYSTORE_PATH")
             if (!keyStorePath.isNullOrEmpty()) {
-                // CI 环境使用注入的变量
                 storeFile = file(keyStorePath)
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                // 本地回退到 debug 签名（确保 ~/.android/debug.keystore 存在）
+                // 本地回退到 debug 签名
                 storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
@@ -57,13 +56,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    // ========== 新写法：使用 compilerOptions 替代弃用的 kotlinOptions ==========
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 
     buildFeatures {
-        compose = true          // 可保留（兼容旧写法），但 Kotlin 2.0 非必需
         buildConfig = true
+        // compose = true 已移除，因为 kotlin.plugin.compose 已接管
     }
 
     packaging {
@@ -78,7 +78,7 @@ android {
 // ========== 🔥 关键：Kotlin 2.0 必须显式声明 Compose 编译器选项 ==========
 compose {
     compilerOptions {
-        // 默认配置即可，如需自定义稳定性文件可在此添加
+        // 默认配置，如需自定义稳定性文件可在此添加
     }
 }
 
