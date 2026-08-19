@@ -1,0 +1,2 @@
+-keep class com.autumn.s44tool.** { *; }
+-dontwarn org.json.**
